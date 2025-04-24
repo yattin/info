@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Navbar from './Navbar'
+import SkipLink from './accessibility/SkipLink'
 import { useAppSelector, useAppDispatch } from '@/store/hooks'
 import { setSidebarOpen } from '@/store/slices/uiSlice'
 
@@ -57,7 +58,10 @@ const Layout = () => {
   }, [])
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      {/* Accessibility skip link */}
+      <SkipLink targetId="main-content" />
+      
       {/* Mobile sidebar overlay */}
       {isMobile && sidebarOpen && (
         <div 
@@ -73,7 +77,7 @@ const Layout = () => {
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
         <Navbar />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">
+        <main id="main-content" className="flex-1 overflow-y-auto p-4 md:p-6" tabIndex={-1}>
           <Outlet />
         </main>
       </div>
