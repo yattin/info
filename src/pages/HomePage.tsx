@@ -4,15 +4,27 @@ import DocumentCard from '@/components/DocumentCard'
 import Loading from '@/components/common/Loading'
 import Card from '@/components/common/Card'
 import Button from '@/components/common/Button'
+import FeedbackModal from '@/components/feedback/FeedbackModal'
 import { useAppSelector, useAppDispatch } from '@/store/hooks'
 import { fetchDocuments } from '@/store/slices/documentsSlice'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { startMeasurement, endMeasurement } from '@/services/monitoring'
+import PerformanceIndicator from '@/components/performance/PerformanceIndicator'
 
 const HomePage = () => {
   const dispatch = useAppDispatch()
   const { documents, loading, error } = useAppSelector((state) => state.documents)
+  const [showFeedback, setShowFeedback] = useLocalStorage('showFeedbackPrompt', true)
 
   useEffect(() => {
+    // Start measuring homepage load time
+    startMeasurement('homepage-load')
+    
     dispatch(fetchDocuments())
+      .then(() => {
+        // End measurement when documents are loaded
+        endMeasurement('homepage-load')
+      })
   }, [dispatch])
 
   // Get recent documents (last 5)
@@ -31,6 +43,13 @@ const HomePage = () => {
   documents.forEach((doc) => {
     doc.tags.forEach((tag) => allTags.add(tag))
   })
+
+  // Handle feedback submission
+  const handleFeedbackSubmit = (data: any) => {
+    console.log('Feedback submitted:', data)
+    // In a real app, we would send this to the server
+    setTimeout(() => setShowFeedback(false), 3000)
+  }
 
   if (loading) return <Loading text="加载文档中..." />
 
@@ -56,16 +75,24 @@ const HomePage = () => {
       {/* Welcome section */}
       <div className="mb-8">
         <Card>
-          <h1 className="text-2xl font-bold text-gray-900">欢迎使用知识库</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-responsive-xl font-bold text-gray-900">欢迎使用知识库</h1>
+          <p className="mt-2 text-gray-600 text-responsive-base">
             这是一个简单的知识库系统，可以浏览、搜索和管理文档。使用左侧导航栏浏览按分类组织的文档，或者使用顶部的搜索栏搜索特定内容。
           </p>
+          <div className="mt-4">
+            <Button
+              variant="primary"
+              onClick={() => setShowFeedback(true)}
+            >
+              提供反馈
+            </Button>
+          </div>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid-responsive-2 gap-6">
         {/* Main content area */}
-        <div className="lg:col-span-2">
+        <div>
           <h2 className="text-xl font-semibold mb-4">最近更新</h2>
           <div className="space-y-4">
             {recentDocuments.length > 0 ? (
@@ -136,6 +163,16 @@ const HomePage = () => {
           </Card>
         </div>
       </div>
+      
+      {/* Feedback modal */}
+      <FeedbackModal 
+        isOpen={showFeedback} 
+        onClose={() => setShowFeedback(false)}
+        onSubmit={handleFeedbackSubmit}
+      />
+      
+      {/* Show performance indicator in development mode */}
+      {import.meta.env.DEV && <PerformanceIndicator showDetails />}
     </div>
   )
 }
