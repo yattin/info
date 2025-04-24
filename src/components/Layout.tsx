@@ -28,8 +28,45 @@ const Layout = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [dispatch, sidebarOpen])
 
+  // Add meta tag for improved mobile display
+  useEffect(() => {
+    // Set appropriate viewport meta tag for mobile devices
+    const viewportMeta = document.querySelector('meta[name="viewport"]')
+    if (viewportMeta) {
+      viewportMeta.setAttribute(
+        'content',
+        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+      )
+    }
+
+    // Add touch detection class
+    if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+      document.body.classList.add('touch-device')
+    }
+
+    return () => {
+      // Reset viewport on unmount
+      if (viewportMeta) {
+        viewportMeta.setAttribute(
+          'content',
+          'width=device-width, initial-scale=1.0'
+        )
+      }
+      document.body.classList.remove('touch-device')
+    }
+  }, [])
+
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Mobile sidebar overlay */}
+      {isMobile && sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden" 
+          onClick={() => dispatch(setSidebarOpen(false))}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar */}
       <Sidebar isMobile={isMobile} />
 

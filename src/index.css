@@ -15,6 +15,57 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  /* Add touch action handling for mobile */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Base styles */
+@layer base {
+  html {
+    @apply text-gray-900;
+    scroll-behavior: smooth;
+  }
+  
+  /* Improve touch experience */
+  body {
+    @apply antialiased;
+    /* Prevent pull-to-refresh on mobile */
+    overscroll-behavior-y: none;
+  }
+  
+  /* Handle zoom on iOS */
+  input, textarea, select, button {
+    font-size: 16px;
+  }
+  
+  /* Remove default focus outline and add custom one */
+  :focus {
+    @apply outline-none;
+  }
+  
+  :focus-visible {
+    @apply ring-2 ring-blue-500 ring-opacity-50;
+  }
+
+  /* Responsive font sizing */
+  h1 {
+    @apply text-2xl sm:text-3xl font-bold;
+  }
+  
+  h2 {
+    @apply text-xl sm:text-2xl font-bold;
+  }
+  
+  h3 {
+    @apply text-lg sm:text-xl font-semibold;
+  }
+  
+  /* Make long words break on mobile */
+  p, h1, h2, h3, h4, h5, h6 {
+    @apply break-words;
+  }
 }
 
 @layer components {
@@ -29,6 +80,30 @@
   }
   .input {
     @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Mobile-specific fixes */
+@media (max-width: 640px) {
+  .mobile-full-height {
+    height: 100vh; /* Use viewport height */
+    height: -webkit-fill-available; /* Mobile Safari */
+  }
+  
+  /* Fix iOS 100vh issue */
+  .h-screen {
+    height: 100vh; /* Fallback */
+    height: -webkit-fill-available;
   }
 }
 
@@ -88,3 +163,29 @@
 .markdown-content th {
   @apply bg-gray-100;
 }
+
+/* Media query for dark mode preferences */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-rgb: 30, 41, 59;
+  }
+  
+  .dark-mode-toggle {
+    @apply bg-yellow-400;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --foreground-rgb: 0, 0, 0;
+    --background-rgb: 248, 249, 250;
+  }
+  
+  .dark-mode-toggle {
+    @apply bg-gray-600;
+  }
+}
+
+/* Import responsive utility styles */
+@import './styles/responsive.css';
