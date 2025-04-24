@@ -6,10 +6,13 @@ import DocumentPage from './pages/DocumentPage'
 import SearchPage from './pages/SearchPage'
 import NotFoundPage from './pages/NotFoundPage'
 import MobileNav from './components/ui/MobileNav'
+import ErrorBoundary from './components/ErrorBoundary'
+import PerformanceIndicator from './components/performance/PerformanceIndicator'
 
 function App() {
   const location = useLocation()
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const isDev = import.meta.env.DEV
 
   // Detect mobile devices
   useEffect(() => {
@@ -27,7 +30,7 @@ function App() {
   }, [location.pathname])
 
   return (
-    <>
+    <ErrorBoundary>
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
@@ -39,7 +42,10 @@ function App() {
 
       {/* Mobile navigation for small screens */}
       {isMobile && <MobileNav />}
-    </>
+      
+      {/* Performance indicator (only in development) */}
+      {isDev && <PerformanceIndicator showDetails />}
+    </ErrorBoundary>
   )
 }
 
