@@ -1,21 +1,34 @@
-import React from 'react'
+import React, { memo, useEffect } from 'react'
 import { Document } from '@/store/slices/documentsSlice'
 import MarkdownRenderer from './MarkdownRenderer'
 import Card from './common/Card'
+import { formatDate } from '@/utils/helpers'
+import { trackRenderTime } from '@/utils/performance'
+import createLogger from '@/utils/logger'
 
 interface DocumentViewProps {
   document: Document
   className?: string
 }
 
+const logger = createLogger('DocumentView')
+
 const DocumentView: React.FC<DocumentViewProps> = ({ document, className = '' }) => {
+  // Track render time for performance monitoring
+  const endTracking = trackRenderTime('DocumentView')
+  
+  useEffect(() => {
+    if (document) {
+      logger.info(`Rendering document: ${document.id} - ${document.title}`)
+    }
+    return () => {
+      endTracking()
+    }
+  }, [document])
+
   if (!document) return null
 
-  const formattedDate = new Date(document.updatedAt).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  const formattedDate = formatDate(document.updatedAt)
 
   return (
     <Card className={`${className} max-w-4xl mx-auto`}>
@@ -44,4 +57,5 @@ const DocumentView: React.FC<DocumentViewProps> = ({ document, className = '' })
   )
 }
 
-export default DocumentView
+// Memoize the component to prevent unnecessary re-renders
+export default memo(DocumentView)

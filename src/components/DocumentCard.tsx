@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { memo } from 'react'
 import { Link } from 'react-router-dom'
 import { Document } from '@/store/slices/documentsSlice'
 import Card from './common/Card'
+import { formatDate, getMarkdownExcerpt } from '@/utils/helpers'
 
 interface DocumentCardProps {
   document: Document
@@ -14,26 +15,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
   className = '',
   showFullContent = false,
 }) => {
-  // Extract a brief excerpt from the content
-  const getExcerpt = (content: string, maxLength = 150) => {
-    // Remove markdown formatting
-    const plainText = content
-      .replace(/#{1,6}\s/g, '') // Remove headings
-      .replace(/\*\*|__|~~|`/g, '') // Remove bold, italic, strikethrough, code
-      .replace(/\[([^\]]*)\]\(([^\)]*)\)/g, '$1') // Replace [text](link) with just text
-      .replace(/\n\s*\n/g, '\n') // Replace multiple newlines with single newlines
-      .trim()
-
-    return plainText.length > maxLength
-      ? plainText.substring(0, maxLength) + '...'
-      : plainText
-  }
-
-  const formattedDate = new Date(document.updatedAt).toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  })
+  const formattedDate = formatDate(document.updatedAt)
 
   return (
     <Card className={`${className} h-full flex flex-col`}>
@@ -50,7 +32,7 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
           {showFullContent ? (
             <p>{document.content}</p>
           ) : (
-            <p>{getExcerpt(document.content)}</p>
+            <p>{getMarkdownExcerpt(document.content)}</p>
           )}
         </div>
       </div>
@@ -71,4 +53,5 @@ const DocumentCard: React.FC<DocumentCardProps> = ({
   )
 }
 
-export default DocumentCard
+// Memoize the component to prevent unnecessary re-renders
+export default memo(DocumentCard)

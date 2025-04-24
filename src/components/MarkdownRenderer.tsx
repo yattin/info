@@ -1,15 +1,62 @@
-import React from 'react'
+import React, { memo, useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import remarkGfm from 'remark-gfm'
+import { trackRenderTime } from '@/utils/performance'
 
 interface MarkdownRendererProps {
   content: string
   className?: string
+  lazyLoad?: boolean
 }
 
-const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className = '' }) => {
+// Enhanced markdown renderer with performance optimizations
+const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
+  content,
+  className = '',
+  lazyLoad = true
+}) => {
+  const [isReady, setIsReady] = useState(!lazyLoad)
+  const endTracking = trackRenderTime('MarkdownRenderer')
+  
+  // For large documents, we can delay the render until after the main thread is idle
+  useEffect(() => {
+    if (lazyLoad && content.length > 10000) {
+      const id = window.requestIdleCallback ? 
+        window.requestIdleCallback(() => setIsReady(true)) : 
+        setTimeout(() => setIsReady(true), 100)
+      
+      return () => {
+        if (window.cancelIdleCallback) {
+          window.cancelIdleCallback(id as number)
+        } else {
+          clearTimeout(id)
+        }
+      }
+    } else {
+      setIsReady(true)
+    }
+  }, [content, lazyLoad])
+
+  useEffect(() => {
+    return () => {
+      endTracking()
+    }
+  }, [content])
+
+  if (!isReady) {
+    return (
+      <div className={`markdown-content ${className} animate-pulse`}>
+        <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+        <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
+        <div className="h-4 bg-gray-200 rounded w-5/6 mb-4"></div>
+        <div className="h-4 bg-gray-200 rounded w-2/3 mb-4"></div>
+        <div className="h-4 bg-gray-200 rounded w-full mb-4"></div>
+      </div>
+    )
+  }
+
   return (
     <div className={`markdown-content ${className}`}>
       <ReactMarkdown
@@ -51,7 +98,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
           
           // Inline elements
           a: ({ node, ...props }) => (
-            <a className="text-blue-600 hover:text-blue-800 hover:underline" {...props} />
+            <a className="text-blue-600 hover:text-blue-800 hover:underline" {...props} target="_blank" rel="noopener noreferrer" />
           ),
           em: ({ node, ...props }) => <em className="italic" {...props} />,
           strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
@@ -77,7 +124,15 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
             )
           },
           img: ({ node, ...props }) => (
-            <img className="max-w-full h-auto my-4 rounded" {...props} alt={props.alt || ''} />
+            <img 
+              loading="lazy" 
+              className="max-w-full h-auto my-4 rounded" 
+              {...props} 
+              alt={props.alt || ''} 
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none'
+              }}
+            />
           ),
           hr: ({ node, ...props }) => <hr className="my-8 border-t border-gray-300" {...props} />,
         }}
@@ -88,4 +143,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, className 
   )
 }
 
-export default MarkdownRenderer
+// Memoize the component to prevent unnecessary re-renders when content doesn't change
+export default memo(MarkdownRenderer, (prevProps, nextProps) => {
+  return prevProps.content === nextProps.content && prevProps.className === nextProps.className
+})
